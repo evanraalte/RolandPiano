@@ -1,17 +1,11 @@
-from ast import parse
 import mido
-from loguru import logger
 import time
 from dataclasses import dataclass, field, InitVar
-from enum import Enum, auto
+from enum import Enum
+import logging
 
-from pkg_resources import parse_requirements
-import debugpy
-
-debugpy.listen(5678)
-print("Waiting for debugger attach")
-debugpy.wait_for_client()
-
+logger = logging.getLogger(__name__)
+logger.addHandler(logging.NullHandler())
 
 RolandAddressMap = Enum(
     "RolandAddressMap",
@@ -98,12 +92,15 @@ RolandAddressMap = Enum(
 )
 
 
-def discover_roland_piano(idx: int = 0) -> str:
+def discover(idx: int = 0) -> str:
+    logger.info("Discovering Roland pianos...")
     pianos = [
-        inp for inp in mido.get_input_names() if inp.startswith("Roland Digital Piano:")
+        inp for inp in mido.get_input_names() if inp.startswith("Roland Digital Piano")
     ]
     if idx > len(pianos):
         logger.error(f"invalid index ({idx}), only {len(pianos)} pianos found")
+        return
+
     piano = pianos[idx]
     return piano
 
@@ -159,8 +156,12 @@ class RolandCmd(Enum):
 @dataclass
 class RolandMessage:
     _cmd: RolandCmd = field(init=False)
-    _address: bytes = field(init=False, default=b"\x00")
-    _data: bytes = field(init=False, default=b"\x00")
+    _address: bytes = field(
+        init=False,
+    )
+    _data: bytes = field(
+        init=False,
+    )
     ROLAND_ID_BYTES = b"\x41\x10\x00\x00\x00\x28"
 
     @property
@@ -176,25 +177,41 @@ class RolandMessage:
 @dataclass
 class RolandMessageRequest(RolandMessage):
     register: InitVar[RolandAddressMap]
-    cmd: InitVar[RolandCmd]
-    data: InitVar[bytes] = None
+    cmd: RolandCmd
+    data_as_int: int = None
     _register: RolandRegister = field(init=False)
+
+    @staticmethod
+    def int_to_byte(num):
+        return num.to_bytes(1, byteorder="big")
+
+    @property
+    def data_as_bytes(self):
+        parsers = {
+            "sequencerTempoWO": lambda x: self.int_to_byte((x & 0xFF80) >> 7)
+            + self.int_to_byte(x & 0x7F),
+            "keyTransposeRO": lambda x: self.int_to_byte(x + 64),
+            # "toneForSingle" : lambda x : (x[0],x[2])
+        }
+
+        if self._register.name in parsers:
+            return parsers[self._register.name](self.data_as_int)
+        else:
+            return self.int_to_byte(self.data_as_int)
 
     def __post_init__(
         self,
         register: RolandAddressMap,
-        cmd: RolandCmd,
-        data: bytes,
     ):
         self._register = RolandRegister(register)
         self._address = self._register.address
-        self._cmd = cmd
-        if cmd == RolandCmd.READ:
-            self._data = self._register.size
-        elif cmd == RolandCmd.write:
-            if data is None:
+        if self.cmd == RolandCmd.WRITE:
+            if self.data_as_int is None:
                 logger.error(f'Data for {RolandCmd.write} message cannot be "None"')
-            self._data = data
+            self._data = self.data_as_bytes
+        else:
+            self._data = self._register.size
+        pass
 
     @property
     def as_mido_message(self) -> mido.Message:
@@ -202,7 +219,7 @@ class RolandMessageRequest(RolandMessage):
             "sysex",
             data=bytearray(
                 self.ROLAND_ID_BYTES
-                + self._cmd.value
+                + self.cmd.value
                 + self._register.address
                 + self._data
                 + self.checksum
@@ -225,7 +242,7 @@ class RolandMessageResponse(RolandMessage):
         }
         if mode in instruments:
             return instruments[mode]
-        return "Unknown instrument"
+        return f"Unknown instrument: {mode}"
 
     def parse_data(self):
         parsers = {
@@ -270,22 +287,28 @@ class RolandMessageResponse(RolandMessage):
 class RolandPiano:
     last_message = None
 
-    def handler(self, message):
-        debugpy.debug_this_thread()
-        # logger.debug(message.hex())
-        self.last_message = RolandMessageResponse(message)
-        logger.info(f"{self.last_message.address.name}: {self.last_message.data}")
-        pass
+    contents = None
+    checklist = None
 
-    def _send(self, msg: RolandMessageRequest):
-        self.port.send(msg.as_mido_message)
+    def metronome_toggle(self):
+        self.write_register(RolandAddressMap.metronomeSwToggle, 0)
 
-    def read_register(self, register: RolandAddressMap):
-        message = RolandMessageRequest(register=register, cmd=RolandCmd.READ)
-        self._send(message)
+    def metronome_set_bpm(self, bpm: int):
+        self.write_register(RolandAddressMap.sequencerTempoWO, bpm)
+
+    def metronome_get_bpm(self) -> int:
+        return self.read_register(RolandAddressMap.sequencerTempoRO)
+
+    def volume_set_percent(self, volume: int):
+        self.write_register(RolandAddressMap.masterVolume, volume)
+
+    def volume_get_percent(self) -> int:
+        return self.read_register(RolandAddressMap.masterVolume)
 
     def __init__(self, name: str) -> None:
         self.last_message = None
+        self.contents = {}
+        self.checklist = set()
         try:
             self.port: mido.ports.IOPort = mido.open_ioport(
                 name=name, virtual=False, callback=self.handler
@@ -293,11 +316,47 @@ class RolandPiano:
         except OSError:
             raise PianoNotFoundException()
 
+    def __enter__(self):
+        return self
 
-piano_name = discover_roland_piano()
-piano = RolandPiano(piano_name)
-while True:
-    piano.read_register(RolandAddressMap.masterVolume)
-    piano.read_register(RolandAddressMap.toneForSingle)
-    piano.read_register(RolandAddressMap.uptime)
-    time.sleep(1)
+    def __exit__(self, type, value, traceback):
+        self.port.close()
+
+    def handler(self, message):
+        # import debugpy
+
+        # debugpy.debug_this_thread()
+        if message.type == "sysex":
+            self.last_message = RolandMessageResponse(message)
+            logger.debug(f"{self.last_message.address.name}: {self.last_message.data}")
+            self.contents[self.last_message.address.name] = self.last_message.data
+            self.checklist.add(self.last_message.address.name)
+
+        else:
+            logger.debug(message)
+        pass
+
+    def _send(self, msg: RolandMessageRequest):
+        self.port.send(msg.as_mido_message)
+
+    def send(self, msg: mido.Message):
+        self.port.send(msg)
+
+    def read_register(self, register: RolandAddressMap):
+        message = RolandMessageRequest(register=register, cmd=RolandCmd.READ)
+        self._send(message)
+        time_start = time.time()
+        value_updated = False
+        while time.time() < time_start + 1 or value_updated:
+            value_updated = register.name in self.checklist
+            if value_updated:
+                self.checklist.remove(register.name)
+                return self.contents[register.name]
+            time.sleep(0.05)
+        logger.error("timed out waiting for response")
+
+    def write_register(self, register: RolandAddressMap, value: int):
+        message = RolandMessageRequest(
+            register=register, cmd=RolandCmd.WRITE, data_as_int=value
+        )
+        self._send(message)
