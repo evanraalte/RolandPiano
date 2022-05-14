@@ -1,6 +1,12 @@
 # Roland Piano
 Library for interfacing with Roland FP pianos over midi. Tested on both Mac and Linux.
 
+# Installation
+Run:
+```bash
+python3 -m pip install roland-piano
+```
+
 # How this started
 I found the button only interface on my Roland FP-10 somewhat limiting. The app would give more insight, but was a bit too buggy IMO. Hence I decided to reverse engineer the Roland specific midi messages and create a Python API so that people can build their own interface. Feel free to contribute!
 
@@ -14,7 +20,7 @@ piano_name = discover()
 with RolandPiano(piano_name) as piano:
     for i in range(0, 100):
         piano.volume_set_percent(i)
-        print(f"Readback BPM: {piano.volume_get_percent()}")
+        print(f"Readback Volume: {piano.volume_get_percent()}")
         time.sleep(0.5)
 ```
 
@@ -24,12 +30,12 @@ import time
 from roland_piano.roland_piano import discover, RolandPiano
 
 piano_name = discover()
-# toggle metronome, todo: find way to obtain state of metronome
-piano.metronome_toggle()
 with RolandPiano(piano_name) as piano:
+    # toggle metronome, todo: find way to obtain state of metronome
+    piano.metronome_toggle()
     for i in range(50, 200):
         piano.metronome_set_bpm(i)
-        print(f"Readback volume: {piano.metronome_get_bpm()}")
+        print(f"Readback BPM: {piano.metronome_get_bpm()}")
         time.sleep(0.5)
 ```
 

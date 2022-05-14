@@ -7,5 +7,5 @@ with RolandPiano(piano_name) as piano:
     piano.metronome_toggle()
     for i in range(50, 200):
         piano.metronome_set_bpm(i)
-        print(f"Readback volume: {piano.metronome_get_bpm()}")
+        print(f"Readback BPM: {piano.metronome_get_bpm()}")
         time.sleep(0.5)
