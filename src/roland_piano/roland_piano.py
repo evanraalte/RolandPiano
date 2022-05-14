@@ -105,6 +105,12 @@ def discover(idx: int = 0) -> str:
     return piano
 
 
+def get_instrument(mode):
+    if mode in Instruments:
+        return Instruments[mode]
+    return f"Unknown instrument: {mode}"
+
+
 class PianoNotFoundException(Exception):
     pass
 
@@ -191,11 +197,15 @@ class RolandMessageRequest(RolandMessage):
             "sequencerTempoWO": lambda x: self.int_to_byte((x & 0xFF80) >> 7)
             + self.int_to_byte(x & 0x7F),
             "keyTransposeRO": lambda x: self.int_to_byte(x + 64),
-            # "toneForSingle" : lambda x : (x[0],x[2])
+            "toneForSingle": lambda x: self.int_to_byte((x & 0xFF000) >> 16)
+            + b"\00"
+            + self.int_to_byte(x & 0xFF),
         }
 
         if self._register.name in parsers:
-            return parsers[self._register.name](self.data_as_int)
+            ret = parsers[self._register.name](self.data_as_int)
+            logger.debug(ret, self.data_as_int)
+            return ret
         else:
             return self.int_to_byte(self.data_as_int)
 
@@ -232,24 +242,13 @@ class RolandMessageResponse(RolandMessage):
     message: InitVar[mido.Message]
     address: bytes = field(init=False)
 
-    @staticmethod
-    def get_instrument(mode):
-        instruments = {
-            "0,0": "Grand Piano 1",
-            "0,1": "Grand Piano 2",
-            "0,2": "Grand Piano 3",
-            "0,3": "Grand Piano 4",
-        }
-        if mode in instruments:
-            return instruments[mode]
-        return f"Unknown instrument: {mode}"
-
     def parse_data(self):
+        logger.debug(self._data)
         parsers = {
             "sequencerTempoRO": lambda data: (data[1] & b"\x7F"[0])
             | ((data[0] & b"\x7F"[0]) << 7),
             "keyTransposeRO": lambda x: x[0] - 64,
-            "toneForSingle": lambda x: self.get_instrument(f"{x[0]},{x[2]}"),
+            "toneForSingle": lambda x: Instruments((x[0], x[2])),
             "uptime": lambda x: x[0] << 64
             | x[1] << 56
             | x[2] << 48
@@ -261,7 +260,9 @@ class RolandMessageResponse(RolandMessage):
             | x[7] << 0,
         }
         if self.address.name in parsers:
-            return parsers[self.address.name](self._data)
+            ret = parsers[self.address.name](self._data)
+            logger.debug(ret, self._data)
+            return ret
         else:
             return int.from_bytes(self._data, byteorder="big")
 
@@ -284,6 +285,54 @@ class RolandMessageResponse(RolandMessage):
         pass
 
 
+class Instruments(Enum):
+    GRAND_PIANO_1 = (0, 0)
+    GRAND_PIANO_2 = (0, 1)
+    GRAND_PIANO_3 = (0, 2)
+    GRAND_PIANO_4 = (0, 3)
+    RAGTIME_PIANO = (0, 4)
+    HARPSICHORD_1 = (0, 5)
+    HARPSICHORD_2 = (0, 6)
+
+    E_PIANO_1 = (1, 0)
+    E_PIANO_2 = (1, 1)
+    E_PIANO_3 = (1, 2)
+    CLAV = (1, 3)
+    VIBRAPHONE = (1, 4)
+    CELESTA = (1, 5)
+    SYNTH_BELL = (1, 6)
+
+    STRINGS_1 = (2, 0)
+    STRINGS_2 = (2, 1)
+    HARP = (2, 2)
+    JAZZ_ORGAN_1 = (2, 3)
+    JAZZ_ORGAN_2 = (2, 4)
+    CHURCH_ORGAN1 = (2, 5)
+    CHURCH_ORGAN2 = (2, 6)
+    ACCORDION = (2, 7)
+    CHOIR_1 = (2, 8)
+    JAZZ_SCAT = (2, 9)
+    CHOIR_2 = (2, 10)
+    CHOIR_3 = (2, 11)
+    SYNTH_PAD = (2, 12)
+    NYLON_STR_GTR = (2, 13)
+    STEEL_STR_GTR = (2, 14)
+    DECAY_STRINGS = (2, 15)
+    DECAY_CHOIR = (2, 16)
+    DECAY_CHOIR_PAD = (2, 17)
+    ACOUSTIC_BASS = (2, 18)
+    ABASS_CYMBAL = (2, 19)
+    FINGERED_BASS = (2, 20)
+    THUM_VOICE = (2, 21)
+
+    UNKNOWN = (-1, -1)
+
+    @classmethod
+    def _missing_(cls, value):
+        logger.error(f"Unknown instrument: {value}")
+        return Instruments.UNKNOWN
+
+
 class RolandPiano:
     last_message = None
 
@@ -304,6 +353,13 @@ class RolandPiano:
 
     def volume_get_percent(self) -> int:
         return self.read_register(RolandAddressMap.masterVolume)
+
+    def get_instrument(self) -> Instruments:
+        return self.read_register(RolandAddressMap.toneForSingle)
+
+    def set_instrument(self, instrument: Instruments):
+        value = (instrument.value[0] << 16) | instrument.value[1]
+        self.write_register(RolandAddressMap.toneForSingle, value)
 
     def __init__(self, name: str) -> None:
         self.last_message = None
@@ -331,9 +387,7 @@ class RolandPiano:
             logger.debug(f"{self.last_message.address.name}: {self.last_message.data}")
             self.contents[self.last_message.address.name] = self.last_message.data
             self.checklist.add(self.last_message.address.name)
-
-        else:
-            logger.debug(message)
+        logger.debug(message)
         pass
 
     def _send(self, msg: RolandMessageRequest):

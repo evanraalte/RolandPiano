@@ -24,7 +24,7 @@ with RolandPiano(piano_name) as piano:
         time.sleep(0.5)
 ```
 
-Togle metronome and increase the BPM
+Toggle metronome and increase the BPM.
 ```python
 import time
 from roland_piano.roland_piano import discover, RolandPiano
@@ -38,8 +38,22 @@ with RolandPiano(piano_name) as piano:
         print(f"Readback BPM: {piano.metronome_get_bpm()}")
         time.sleep(0.5)
 ```
+Loop over all the instruments.
+```python
+from roland_piano.roland_piano import discover, RolandPiano, Instruments
+
+piano_name = discover()
+with RolandPiano(piano_name) as piano:
+    for instrument in Instruments:
+        if instrument == Instruments.UNKNOWN:
+            continue
+        print(f"Setting instrument to {instrument}")
+        piano.set_instrument(instrument)
+        print(f"Get instrument: {piano.get_instrument()}")
+```
+
 
 # Limitations
 - Doesn't trigger events (e.g. volume changed) over midi when changing many of the piano settings. Connecting with the app enables this, so I  (or you😃) need to do some digging on how this is achieved. Contact me for more information on what I have tried so far.
-- API is limited to metronome and volume at the moment, but there is some low hanging fruit for more functionality.
+- API is quite limited at the moment, but there is some low hanging fruit for more functionality.
 
