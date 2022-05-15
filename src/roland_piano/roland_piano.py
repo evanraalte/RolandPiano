@@ -7,89 +7,86 @@ import logging
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 
-RolandAddressMap = Enum(
-    "RolandAddressMap",
-    {
-        # 010000xx
-        "serverSetupFileName": b"\x01\x00\x00\x00",
-        # 010001xx
-        "songToneLanguage": b"\x01\x00\x01\x00",
-        "keyTransposeRO": b"\x01\x00\x01\x01",
-        "songTransposeRO": b"\x01\x00\x01\x02",
-        "sequencerStatus": b"\x01\x00\x01\x03",
-        "sequencerMeasure": b"\x01\x00\x01\x05",
-        "sequencerTempoNotation": b"\x01\x00\x01\x07",
-        "sequencerTempoRO": b"\x01\x00\x01\x08",
-        "sequencerBeatNumerator": b"\x01\x00\x01\x0A",
-        "sequencerBeatDenominator": b"\x01\x00\x01\x0B",
-        "sequencerPartSwAccomp": b"\x01\x00\x01\x0C",
-        "sequencerPartSwLeft": b"\x01\x00\x01\x0D",
-        "sequencerPartSwRight": b"\x01\x00\x01\x0E",
-        "metronomeStatus": b"\x01\x00\x01\x0F",
-        "headphonesConnection": b"\x01\x00\x01\x10",
-        # 010002xx
-        "keyBoardMode": b"\x01\x00\x02\x00",
-        "splitPoint": b"\x01\x00\x02\x01",
-        "splitOctaveShift": b"\x01\x00\x02\x02",
-        "splitBalance": b"\x01\x00\x02\x03",
-        "dualOctaveShift": b"\x01\x00\x02\x04",
-        "dualBalance": b"\x01\x00\x02\x05",
-        "twinPianoMode": b"\x01\x00\x02\x06",
-        "toneForSingle": b"\x01\x00\x02\x07",
-        "toneForSplit": b"\x01\x00\x02\x0A",
-        "toneForDual": b"\x01\x00\x02\x0D",
-        "songNumber": b"\x01\x00\x02\x10",
-        "masterVolume": b"\x01\x00\x02\x13",
-        "masterVolumeLimit": b"\x01\x00\x02\x14",
-        "allSongPlayMode": b"\x01\x00\x02\x15",
-        "splitRightOctaveShift": b"\x01\x00\x02\x16",
-        "dualTone1OctaveShift": b"\x01\x00\x02\x17",
-        "masterTuning": b"\x01\x00\x02\x18",
-        "ambience": b"\x01\x00\x02\x1A",
-        "headphones3DAmbience": b"\x01\x00\x02\x1B",
-        "brilliance": b"\x01\x00\x02\x1C",
-        "keyTouch": b"\x01\x00\x02\x1D",
-        "transposeMode": b"\x01\x00\x02\x1E",
-        "metronomeBeat": b"\x01\x00\x02\x1F",
-        "metronomePattern": b"\x01\x00\x02\x20",
-        "metronomeVolume": b"\x01\x00\x02\x21",
-        "metronomeTone": b"\x01\x00\x02\x22",
-        "metronomeDownBeat": b"\x01\x00\x02\x23",
-        # 010003xx
-        "applicationMode": b"\x01\x00\x03\x00",
-        "scorePageTurn": b"\x01\x00\x03\x02",
-        "arrangerPedalFunction": b"\x01\x00\x03\x03",
-        "arrangerBalance": b"\x01\x00\x03\x05",
-        "connection": b"\x01\x00\x03\x06",
-        "keyTransposeWO": b"\x01\x00\x03\x07",
-        "songTransposeWO": b"\x01\x00\x03\x08",
-        "sequencerTempoWO": b"\x01\x00\x03\x09",
-        "tempoReset": b"\x01\x00\x03\x0B",
-        # 010004xx
-        "soundEffect": b"\x01\x00\x04\x00",
-        "soundEffectStopAll": b"\x01\x00\x04\x02",
-        # 010005xx
-        "sequencerREW": b"\x01\x00\x05\x00",
-        "sequencerFF": b"\x01\x00\x05\x01",
-        "sequencerReset": b"\x01\x00\x05\x02",
-        "sequencerTempoDown": b"\x01\x00\x05\x03",
-        "sequencerTempoUp": b"\x01\x00\x05\x04",
-        "sequencerPlayStopToggle": b"\x01\x00\x05\x05",
-        "sequencerAccompPartSwToggle": b"\x01\x00\x05\x06",
-        "sequencerLeftPartSwToggle": b"\x01\x00\x05\x07",
-        "sequencerRightPartSwToggle": b"\x01\x00\x05\x08",
-        "metronomeSwToggle": b"\x01\x00\x05\x09",
-        "sequencerPreviousSong": b"\x01\x00\x05\x0A",
-        "sequencerNextSong": b"\x01\x00\x05\x0B",
-        # 010006xx
-        "pageTurnPreviousPage": b"\x01\x00\x06\x00",
-        "pageTurnNextPage": b"\x01\x00\x06\x01",
-        # 010007xx
-        "uptime": b"\x01\x00\x07\x00",
-        # 010008xx
-        "addressMapVersion": b"\x01\x00\x08\x00",
-    },
-)
+
+class RolandAddressMap(Enum):
+    # 010000xx
+    serverSetupFileName = b"\x01\x00\x00\x00"
+    # 010001xx
+    songToneLanguage = b"\x01\x00\x01\x00"
+    keyTransposeRO = b"\x01\x00\x01\x01"
+    songTransposeRO = b"\x01\x00\x01\x02"
+    sequencerStatus = b"\x01\x00\x01\x03"
+    sequencerMeasure = b"\x01\x00\x01\x05"
+    sequencerTempoNotation = b"\x01\x00\x01\x07"
+    sequencerTempoRO = b"\x01\x00\x01\x08"
+    sequencerBeatNumerator = b"\x01\x00\x01\x0A"
+    sequencerBeatDenominator = b"\x01\x00\x01\x0B"
+    sequencerPartSwAccomp = b"\x01\x00\x01\x0C"
+    sequencerPartSwLeft = b"\x01\x00\x01\x0D"
+    sequencerPartSwRight = b"\x01\x00\x01\x0E"
+    metronomeStatus = b"\x01\x00\x01\x0F"
+    headphonesConnection = b"\x01\x00\x01\x10"
+    # 010002xx
+    keyBoardMode = b"\x01\x00\x02\x00"
+    splitPoint = b"\x01\x00\x02\x01"
+    splitOctaveShift = b"\x01\x00\x02\x02"
+    splitBalance = b"\x01\x00\x02\x03"
+    dualOctaveShift = b"\x01\x00\x02\x04"
+    dualBalance = b"\x01\x00\x02\x05"
+    twinPianoMode = b"\x01\x00\x02\x06"
+    toneForSingle = b"\x01\x00\x02\x07"
+    toneForSplit = b"\x01\x00\x02\x0A"
+    toneForDual = b"\x01\x00\x02\x0D"
+    songNumber = b"\x01\x00\x02\x10"
+    masterVolume = b"\x01\x00\x02\x13"
+    masterVolumeLimit = b"\x01\x00\x02\x14"
+    allSongPlayMode = b"\x01\x00\x02\x15"
+    splitRightOctaveShift = b"\x01\x00\x02\x16"
+    dualTone1OctaveShift = b"\x01\x00\x02\x17"
+    masterTuning = b"\x01\x00\x02\x18"
+    ambience = b"\x01\x00\x02\x1A"
+    headphones3DAmbience = b"\x01\x00\x02\x1B"
+    brilliance = b"\x01\x00\x02\x1C"
+    keyTouch = b"\x01\x00\x02\x1D"
+    transposeMode = b"\x01\x00\x02\x1E"
+    metronomeBeat = b"\x01\x00\x02\x1F"
+    metronomePattern = b"\x01\x00\x02\x20"
+    metronomeVolume = b"\x01\x00\x02\x21"
+    metronomeTone = b"\x01\x00\x02\x22"
+    metronomeDownBeat = b"\x01\x00\x02\x23"
+    # 010003xx
+    applicationMode = b"\x01\x00\x03\x00"
+    scorePageTurn = b"\x01\x00\x03\x02"
+    arrangerPedalFunction = b"\x01\x00\x03\x03"
+    arrangerBalance = b"\x01\x00\x03\x05"
+    connection = b"\x01\x00\x03\x06"
+    keyTransposeWO = b"\x01\x00\x03\x07"
+    songTransposeWO = b"\x01\x00\x03\x08"
+    sequencerTempoWO = b"\x01\x00\x03\x09"
+    tempoReset = b"\x01\x00\x03\x0B"
+    # 010004xx
+    soundEffect = b"\x01\x00\x04\x00"
+    soundEffectStopAll = b"\x01\x00\x04\x02"
+    # 010005xx
+    sequencerREW = b"\x01\x00\x05\x00"
+    sequencerFF = b"\x01\x00\x05\x01"
+    sequencerReset = b"\x01\x00\x05\x02"
+    sequencerTempoDown = b"\x01\x00\x05\x03"
+    sequencerTempoUp = b"\x01\x00\x05\x04"
+    sequencerPlayStopToggle = b"\x01\x00\x05\x05"
+    sequencerAccompPartSwToggle = b"\x01\x00\x05\x06"
+    sequencerLeftPartSwToggle = b"\x01\x00\x05\x07"
+    sequencerRightPartSwToggle = b"\x01\x00\x05\x08"
+    metronomeSwToggle = b"\x01\x00\x05\x09"
+    sequencerPreviousSong = b"\x01\x00\x05\x0A"
+    sequencerNextSong = b"\x01\x00\x05\x0B"
+    # 010006xx
+    pageTurnPreviousPage = b"\x01\x00\x06\x00"
+    pageTurnNextPage = b"\x01\x00\x06\x01"
+    # 010007xx
+    uptime = b"\x01\x00\x07\x00"
+    # 010008xx
+    addressMapVersion = b"\x01\x00\x08\x00"
 
 
 def discover(idx: int = 0) -> str:
@@ -116,6 +113,10 @@ class PianoNotFoundException(Exception):
 
 
 class InvalidAddressException(Exception):
+    pass
+
+
+class InvalidMessageException(Exception):
     pass
 
 
@@ -243,7 +244,6 @@ class RolandMessageResponse(RolandMessage):
     address: bytes = field(init=False)
 
     def parse_data(self):
-        logger.debug(self._data)
         parsers = {
             "sequencerTempoRO": lambda data: (data[1] & b"\x7F"[0])
             | ((data[0] & b"\x7F"[0]) << 7),
@@ -261,7 +261,7 @@ class RolandMessageResponse(RolandMessage):
         }
         if self.address.name in parsers:
             ret = parsers[self.address.name](self._data)
-            logger.debug(ret, self._data)
+            logger.debug(f"{self.address.name=}, {ret=}, {self._data=}")
             return ret
         else:
             return int.from_bytes(self._data, byteorder="big")
@@ -272,7 +272,11 @@ class RolandMessageResponse(RolandMessage):
 
     def __post_init__(self, message: mido.Message):
         roland_id = b"".join(map(lambda i: i.to_bytes(1, "little"), message.data[0:6]))
-        assert roland_id == self.ROLAND_ID_BYTES
+        #  TODO: check if message starts with F07E10060241, this indicates model id
+        if roland_id != self.ROLAND_ID_BYTES:
+            raise InvalidMessageException(
+                f"id bytes mismatch from roland_id: {roland_id=} {message=} {message.hex()}"
+            )
         self.cmd = RolandCmd(message.data[6].to_bytes(1, "big"))
         self.address = RolandAddressMap(bytes(message.data[7 : 7 + 4]))
         self._address = self.address.value
@@ -281,7 +285,10 @@ class RolandMessageResponse(RolandMessage):
             d.to_bytes(1, "big") for d in message.data[11 : msg_len - 1]
         )
         received_checksum = message.data[msg_len - 1].to_bytes(1, "big")
-        assert received_checksum == self.checksum
+        if received_checksum != self.checksum:
+            raise InvalidMessageException(
+                f"Checksum mismatch, {received_checksum=} {self.checksum}"
+            )
         pass
 
 
@@ -372,6 +379,14 @@ class RolandPiano:
         except OSError:
             raise PianoNotFoundException()
 
+        # official setup routine, but not fixing push status on change
+        # self.read_register(RolandAddressMap.uptime)
+        # self.read_register(RolandAddressMap.addressMapVersion)
+        # self.send(mido.Message("sysex", data=[0x7E, 0x10, 0x06, 0x01]))
+        # self.read_register(RolandAddressMap.serverSetupFileName)
+        # self.read_register(RolandAddressMap.sequencerStatus)
+        # self.read_register(RolandAddressMap.metronomeStatus)
+
     def __enter__(self):
         return self
 
@@ -379,15 +394,23 @@ class RolandPiano:
         self.port.close()
 
     def handler(self, message):
+
         # import debugpy
 
         # debugpy.debug_this_thread()
+
         if message.type == "sysex":
-            self.last_message = RolandMessageResponse(message)
-            logger.debug(f"{self.last_message.address.name}: {self.last_message.data}")
-            self.contents[self.last_message.address.name] = self.last_message.data
-            self.checklist.add(self.last_message.address.name)
-        logger.debug(message)
+            logger.debug(f"raw sysex: {message}")
+            try:
+                self.last_message = RolandMessageResponse(message)
+                data = self.last_message.data
+                logger.debug(f"{self.last_message.address.name}: {data}")
+                self.contents[self.last_message.address.name] = data
+                self.checklist.add(self.last_message.address.name)
+            except InvalidMessageException as e:
+                logger.error(e)
+        else:
+            logger.debug(f"nonsysex msg: {message}")
         pass
 
     def _send(self, msg: RolandMessageRequest):
