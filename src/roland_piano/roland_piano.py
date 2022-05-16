@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 import mido
 import time
 from .roland_messages import RolandMessageRequest, RolandMessageResponse
@@ -20,27 +21,20 @@ class RolandPiano:
     contents = None
     checklist = None
 
-    instances = set()
-
-    def metronome_toggle(self):
-        self.write_register(RolandAddressMap.metronomeSwToggle, 0)
-
-    def metronome_set_bpm(self, bpm: int):
-        self.write_register(RolandAddressMap.sequencerTempoWO, bpm)
-
-    def metronome_get_bpm(self) -> int:
-        return self.read_register(RolandAddressMap.sequencerTempoRO)
-
-    def volume_set_percent(self, volume: int):
-        self.write_register(RolandAddressMap.masterVolume, volume)
-
-    def volume_get_percent(self) -> int:
+    @property
+    def volume(self) -> int:
         return self.read_register(RolandAddressMap.masterVolume)
 
-    def get_instrument(self) -> Instruments:
+    @volume.setter
+    def volume(self, volume: int):
+        self.write_register(RolandAddressMap.masterVolume, volume)
+
+    @property
+    def instrument(self) -> Instruments:
         return self.read_register(RolandAddressMap.toneForSingle)
 
-    def set_instrument(self, instrument: Instruments):
+    @instrument.setter
+    def instrument(self, instrument: Instruments):
         value = (instrument.value[0] << 16) | instrument.value[1]
         self.write_register(RolandAddressMap.toneForSingle, value)
 
@@ -48,6 +42,7 @@ class RolandPiano:
         self.last_message = None
         self.contents = {}
         self.checklist = set()
+        self.metronome = Metronome(self)
         try:
             self.port: mido.ports.IOPort = mido.open_ioport(name=name, virtual=False, callback=self.handler)
         except OSError:
@@ -114,3 +109,24 @@ class RolandPiano:
         message = RolandMessageRequest(register=register, cmd=RolandCmd.WRITE, data_as_int=value)
         logger.debug(message.as_mido_message.hex())
         self.send_mido_msg(message.as_mido_message)
+
+
+@dataclass
+class Metronome:
+    piano: RolandPiano
+
+    def toggle(self):
+        self.piano.write_register(RolandAddressMap.metronomeSwToggle, 0)
+
+    def enable(self, enable: bool):
+        status = bool(self.piano.read_register(RolandAddressMap.metronomeStatus))
+        if status != enable:
+            self.toggle()
+
+    @property
+    def bpm(self) -> int:
+        return self.piano.read_register(RolandAddressMap.sequencerTempoRO)
+
+    @bpm.setter
+    def bpm(self, bpm: int):
+        self.piano.write_register(RolandAddressMap.sequencerTempoWO, bpm)
