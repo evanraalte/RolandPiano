@@ -1,9 +1,0 @@
-20,459 DEBUG    [roland_piano.py:77] raw sysex: sysex data=(65,16,0,0,0,40,18,1,0,2,19,33,73) time=0
-20,459 DEBUG    [roland_piano.py:81] masterVolume: 33
-Readback Volume: 33
-21,526 DEBUG    [roland_piano.py:77] raw sysex: sysex data=(65,16,0,0,0,40,18,1,0,2,19,63,43) time=0
-21,526 DEBUG    [roland_piano.py:81] masterVolume: 63
-Readback Volume: 63
-
-
-57,92 DEBUG    [roland_piano.py:91] send: sysex data=(65,16,0,0,0,40,18,1,0,2,19,50,56) time=0
