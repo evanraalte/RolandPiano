@@ -1,0 +1,14 @@
+INFO     [roland_piano.py:93] Discovering Roland pianos...
+DEBUG    [roland_piano.py:400] raw sysex: sysex data=(65,16,0,0,0,40,18,1,0,7,0,0,0,4,5,10,7,3,14,77) time=0
+DEBUG    [roland_piano.py:264] self.address.name='uptime', ret=1131440532554510, self._data=b'\x00\x00\x04\x05\n\x07\x03\x0e'
+DEBUG    [roland_piano.py:404] uptime: 1131440532554510
+DEBUG    [roland_piano.py:400] raw sysex: sysex data=(65,16,0,0,0,40,18,1,0,8,0,1,118) time=0
+DEBUG    [roland_piano.py:404] addressMapVersion: 1
+DEBUG    [roland_piano.py:400] raw sysex: sysex data=(126,16,6,2,65,25,3,0,0,16,1,0,0) time=0
+ERROR    [roland_piano.py:408] id bytes mismatch from roland_id: roland_id=b'~\x10\x06\x02A\x19' message=Message('sysex', data=(126, 16, 6, 2, 65, 25, 3, 0, 0, 16, 1, 0, 0), time=0) F0 7E 10 06 02 41 19 03 00 00 10 01 00 00 F7
+DEBUG    [roland_piano.py:400] raw sysex: sysex data=(65,16,0,0,0,40,18,1,0,0,0,67,70,49,53,67,95,48,48,48,49,95,71,76,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,91) time=0
+DEBUG    [roland_piano.py:404] serverSetupFileName: 30428979771156582731231446351439125203913367511958373803283292624270498209824
+DEBUG    [roland_piano.py:400] raw sysex: sysex data=(65,16,0,0,0,40,18,1,0,1,3,0,123) time=0
+DEBUG    [roland_piano.py:404] sequencerStatus: 0
+DEBUG    [roland_piano.py:400] raw sysex: sysex data=(65,16,0,0,0,40,18,1,0,1,15,0,111) time=0
+DEBUG    [roland_piano.py:404] metronomeStatus: 0
